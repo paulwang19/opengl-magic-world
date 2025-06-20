@@ -21,6 +21,7 @@ int main(int argc, char** argv) {
 
     // Initialize OpenGL settings
     init();
+    // test comment
 
     // Register callback functions
     glutDisplayFunc(display);
