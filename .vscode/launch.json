@@ -1,0 +1,64 @@
+{
+    // 使用 IntelliSense 以得知可用的屬性。
+    // 暫留以檢視現有屬性的描述。
+    // 如需詳細資訊，請瀏覽: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug x64 Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/x64/Debug/opengl-magic-world.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal",
+            // 使用以下配置 VSCode 會跳出 "'externalConsole' 已淘汰，請改用 'console'" 提示
+            // "externalConsole": true,
+            "preLaunchTask": "Build x64 Debug"
+        },
+        {
+            "name": "Debug x64 Release",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/x64/Release/opengl-magic-world.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal",
+            // 使用以下配置 VSCode 會跳出 "'externalConsole' 已淘汰，請改用 'console'" 提示
+            // "externalConsole": true,
+            "preLaunchTask": "Build x64 Release"
+        },
+        {
+            "name": "Debug x86 Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Debug/opengl-magic-world.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal",
+            // 使用以下配置 VSCode 會跳出 "'externalConsole' 已淘汰，請改用 'console'" 提示
+            // "externalConsole": true,
+            "preLaunchTask": "Build x86 Debug"
+        },
+        {
+            "name": "Debug x86 Release",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Release/opengl-magic-world.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal",
+            // 使用以下配置 VSCode 會跳出 "'externalConsole' 已淘汰，請改用 'console'" 提示
+            // "externalConsole": true,
+            "preLaunchTask": "Build x86 Release"
+        }
+    ]
+}
