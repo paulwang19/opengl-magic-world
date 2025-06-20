@@ -27,6 +27,8 @@ x64/
 !dll/x64/
 x86/
 [Ww][Ii][Nn]32/
+!lib/[Ww][Ii][Nn]32
+!dll/[Ww][Ii][Nn]32
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
@@ -79,7 +81,7 @@ StyleCopReport.xml
 *.meta
 *.obj
 # but not model_file/*.obj, as it is my model format files
-!model_file/*.obj
+!assets/models/*.obj
 *.iobj
 *.pch
 *.pdb
