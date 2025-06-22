@@ -14,6 +14,8 @@ vector<Normal> tower_normals_data;
 vector<TexCoord> tower_texcoords_data;
 
 GLfloat planetAngleX, planetAngleY, planetAngleZ = 0.0f;
+GLfloat angleX, angleY, angleZ;
+GLuint planetTexture, towerTexture, groundTexture;
 
 // Function to initialize OpenGL settings
 void init() {
@@ -29,8 +31,9 @@ void init() {
     // Enable color material
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_TEXTURE_2D);
-    planetTexture = loadTGATexture("assets/textures/test.tga");
+    planetTexture = loadTGATexture("assets/textures/planet.tga");
     towerTexture = loadTGATexture("assets/textures/tower.tga");
+    groundTexture = loadTGATexture("assets/textures/grass.tga");
 }
 
 void drawPlanet() {
@@ -48,8 +51,29 @@ void drawPlanet() {
     glPopMatrix();
 }
 
+void drawGround() {
+    GLfloat mat_emission[] = { 1.0, 1.0, 1.0, 1.0 };
+    glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBindTexture(GL_TEXTURE_2D, groundTexture);
+    glPushMatrix();
+    glBegin(GL_QUADS);
+        glNormal3f(0.0f, 1.0f, 0.0f);
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-100.0f, -2.0f, -100.0f);
+        glTexCoord2f(0.0f, 50.0f); glVertex3f(-100.0f, -2.0f,  100.0f);
+        glTexCoord2f(50.0f, 50.0f); glVertex3f( 100.0f, -2.0f,  100.0f);
+        glTexCoord2f(50.0f, 0.0f); glVertex3f( 100.0f, -2.0f, -100.0f);
+    glEnd();
+    glPopMatrix();
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    GLfloat no_mat_emission[] = { 0.0, 0.0, 0.0, 1.0 };
+    glMaterialfv(GL_FRONT, GL_EMISSION, no_mat_emission);
+}
+
 void drawTower() {
-    glColor3f(1.0f, 1.0f, 1.0f); // 確保模型亮一點（避免全黑）
+    glColor3f(1.0f, 1.0f, 1.0f); // Set color to white for texturing
     glBindTexture(GL_TEXTURE_2D, towerTexture);
     glPushMatrix();
     glTranslatef(-5.0f, -2.0f, -5.0f);
@@ -79,6 +103,7 @@ void display() {
     // Draw Function
     drawPlanet();
     drawTower();
+    drawGround();
 
     // Swap the buffers
     glutSwapBuffers();
