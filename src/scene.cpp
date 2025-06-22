@@ -14,6 +14,7 @@ vector<Normal> tower_normals_data;
 vector<TexCoord> tower_texcoords_data;
 
 GLfloat planetAngleX, planetAngleY, planetAngleZ = 0.0f;
+float planetTime = 0.0f;
 GLfloat angleX, angleY, angleZ;
 GLuint planetTexture, towerTexture, groundTexture;
 
@@ -38,9 +39,10 @@ void init() {
 
 void drawPlanet() {
     glPushMatrix();
-    glRotatef(planetAngleY, 0.0, 1.0, 0.0);
-    glTranslatef(-5.0, 2.5, 0.0); // Position the sphere
-    glColor3f(1.0, 1.0, 1.0); // Use white color for texturing
+    float yWave = cos(planetTime) * 1.0f; // 1.0f 是擺動幅度
+    glTranslatef(-5.0f, 2.5f + yWave, 0.0f); // y 加上 cos 波擺動
+    glRotatef(planetAngleY, 0.0f, 1.0f, 0.0f); // 自轉
+    glColor3f(1.0f, 1.0f, 1.0f);
     glBindTexture(GL_TEXTURE_2D, planetTexture);
     GLUquadric* quad = gluNewQuadric();
     gluQuadricTexture(quad, GL_TRUE);
@@ -113,6 +115,9 @@ void update(int value) {
     planetAngleY += 2.0f;
     if (planetAngleY > 360)
         planetAngleY -= 360;
+
+    planetTime += 0.05f;
+
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);
 }
