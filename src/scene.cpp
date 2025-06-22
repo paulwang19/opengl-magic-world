@@ -5,14 +5,24 @@
 #include <vector>
 #include <cmath>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 using namespace std;
 
 const char* file1 = "assets/models/Magic_tower.obj";
+const char* file2 = "assets/models/sword.obj";
 
 vector<Vertex> tower_vertex_data;
 vector<Face> tower_face_data;
 vector<Normal> tower_normals_data;
 vector<TexCoord> tower_texcoords_data;
+
+vector<Vertex> sword_vertex_data;
+vector<Face> sword_face_data;
+vector<Normal> sword_normals_data;
+vector<TexCoord> sword_texcoords_data;
 
 GLfloat planetAngleX, planetAngleY, planetAngleZ = 0.0f;
 float planetTime = 0.0f;
@@ -20,7 +30,15 @@ GLfloat angleX, angleY, angleZ;
 GLfloat cameraX = 0.0f, cameraY = 0.0f, cameraZ = 10.0f;
 GLfloat lookAtX = 0.0f, lookAtY = 0.0f, lookAtZ = 0.0f;
 GLfloat viewAngleY = 0.0f;
-GLuint planetTexture, towerTexture, groundTexture;
+GLuint planetTexture, towerTexture, groundTexture, swordTexture, marbleTexture, woodTexture;
+bool isPaused = false;
+GLfloat moonAngle = 0.0f;
+GLfloat swordSwayAngle = 0.0f;
+
+// Kepler's law parameters for satellite
+const float satelliteSemiMajorAxis = -3.0f;
+const float satelliteEccentricity = 0.5f;
+float satelliteTrueAnomaly = 0.0f;
 
 // Function to reset the scene
 void reset() {
@@ -28,11 +46,15 @@ void reset() {
     cameraX = 0.0f; cameraY = 0.0f; cameraZ = 10.0f;
     lookAtX = 0.0f; lookAtY = 0.0f; lookAtZ = 0.0f;
     viewAngleY = 0.0f;
+    satelliteTrueAnomaly = 0.0f;
+    moonAngle = 0.0f;
+    swordSwayAngle = 0.0f;
 }
 
 // Function to initialize OpenGL settings
 void init() {
     LoadObjFile(file1, tower_vertex_data, tower_texcoords_data, tower_normals_data, tower_face_data);
+    LoadObjFile(file2, sword_vertex_data, sword_texcoords_data, sword_normals_data, sword_face_data);
     // Set clear color to black
     glClearColor(0.0, 0.0, 0.0, 1.0);
     // Enable depth testing for 3D
@@ -47,6 +69,9 @@ void init() {
     planetTexture = loadTGATexture("assets/textures/planet.tga");
     towerTexture = loadTGATexture("assets/textures/tower.tga");
     groundTexture = loadTGATexture("assets/textures/chessboard.tga");
+    swordTexture = loadTGATexture("assets/textures/s.tga");
+    marbleTexture = loadTGATexture("assets/textures/marble.tga");
+    woodTexture = loadTGATexture("assets/textures/wood.tga");
     reset();
 }
 
@@ -87,6 +112,142 @@ void drawGround() {
     glMaterialfv(GL_FRONT, GL_EMISSION, no_mat_emission);
 }
 
+void drawStar() {
+    // Make the material bright
+    GLfloat mat_emission[] = { 0.7, 0.7, 0.7, 1.0 }; // Bright white emission
+    glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
+
+    GLUquadric* quad = gluNewQuadric();
+    gluQuadricTexture(quad, GL_TRUE);
+
+    // Draw the main body (sphere) of the sea urchin
+    glBindTexture(GL_TEXTURE_2D, marbleTexture);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    gluSphere(quad, 0.8, 30, 30);
+
+    // Draw the spikes (cones)
+    glBindTexture(GL_TEXTURE_2D, marbleTexture); // Using wood texture for spikes
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    const int num_layers = 7; // Number of layers of spikes
+    const float spike_height = 0.7f;
+    const float spike_base_radius = 0.04f;
+    const float body_radius = 0.8f;
+
+    // Draw spikes in layers
+    for (int i = 1; i < num_layers; ++i) {
+        float lat = M_PI * i / num_layers;
+        // Calculate how many spikes to draw on this layer based on circumference
+        int num_spikes_on_layer = (int)(2 * M_PI * body_radius * sin(lat) / (4 * spike_base_radius));
+        if (num_spikes_on_layer < 4) num_spikes_on_layer = 4;
+
+        for (int j = 0; j < num_spikes_on_layer; ++j) {
+            float lon = 2 * M_PI * j / num_spikes_on_layer;
+
+            // Convert spherical coordinates to Cartesian for spike position
+            float x = body_radius * sin(lat) * cos(lon);
+            float y = body_radius * sin(lat) * sin(lon);
+            float z = body_radius * cos(lat);
+
+            glPushMatrix();
+            // Move to the spike's position on the sphere's surface
+            glTranslatef(x, y, z);
+
+            // Rotate the coordinate system to make the spike point outwards
+            float angle = acos(z / body_radius) * 180.0f / M_PI;
+            glRotatef(angle, -y, x, 0.0f);
+
+            // Draw the spike as a cone
+            gluCylinder(quad, spike_base_radius, 0, spike_height, 8, 1);
+            glPopMatrix();
+        }
+    }
+
+    // Add spikes at the poles to cover the top and bottom
+    glPushMatrix();
+    glTranslatef(0, 0, body_radius);
+    gluCylinder(quad, spike_base_radius, 0, spike_height, 8, 1);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0, 0, -body_radius);
+    glRotatef(180, 1, 0, 0);
+    gluCylinder(quad, spike_base_radius, 0, spike_height, 8, 1);
+    glPopMatrix();
+
+    gluDeleteQuadric(quad);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Reset emission
+    GLfloat no_mat_emission[] = { 0.0, 0.0, 0.0, 1.0 };
+    glMaterialfv(GL_FRONT, GL_EMISSION, no_mat_emission);
+}
+
+void drawSwordAndSatellite() {
+    // Save the current matrix
+    glPushMatrix();
+
+    // Translate to the sword's base position
+    glTranslatef(0.0f, 3.0f, -5.0f);
+
+    // --- Draw the Sword ---
+    glPushMatrix();
+    // Apply sword-specific transformations
+    glScalef(0.1f, 0.1f, 0.1f);
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+    glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
+
+    // Apply sway animation
+    glRotatef(swordSwayAngle, 0.0f, 1.0f, 0.0f);
+
+    // Bind texture and draw model
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBindTexture(GL_TEXTURE_2D, swordTexture);
+    DrawObjModel(sword_vertex_data, sword_texcoords_data, sword_normals_data, sword_face_data);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glPopMatrix(); // Restore to the sword's base position
+
+    // --- Draw the Satellite ---
+    glPushMatrix();
+    
+    // Position based on Kepler's laws
+    float a = satelliteSemiMajorAxis;
+    float e = satelliteEccentricity;
+    float theta = satelliteTrueAnomaly;
+    float r = a * (1 - e * e) / (1 + e * cos(theta));
+
+    // The sword is at the focus. The orbit is in the XZ plane.
+    float satelliteX = r * cos(theta);
+    float satelliteZ = r * sin(theta);
+    glTranslatef(satelliteX, 0.0f, satelliteZ);
+
+    // Rotate the star to make it spin
+    glRotatef(planetTime * 50, 0.0, 0.0, 1.0);
+    glScalef(0.5f, 0.5f, 0.5f);
+
+    // Draw the star
+    drawStar();
+
+    // --- Draw the star's satellite ---
+    glPushMatrix();
+    glRotatef(moonAngle, 0.0f, 1.0f, 0.0f); // Orbit around the star's Y-axis
+    glTranslatef(3.0f, 0.0f, 0.0f); // Orbit radius
+    glScalef(0.4f, 0.4f, 0.4f); // Scale down the satellite
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBindTexture(GL_TEXTURE_2D, woodTexture);
+    GLUquadric* quad = gluNewQuadric();
+    gluQuadricTexture(quad, GL_TRUE);
+    gluSphere(quad, 1.0, 20, 20);
+    gluDeleteQuadric(quad);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glPopMatrix();
+
+    glPopMatrix(); // Restore to the sword's base position
+
+    // Restore the original matrix
+    glPopMatrix();
+}
+
 void drawTower() {
     glColor3f(1.0f, 1.0f, 1.0f); // Set color to white for texturing
     glBindTexture(GL_TEXTURE_2D, towerTexture);
@@ -119,17 +280,41 @@ void display() {
     drawPlanet();
     drawTower();
     drawGround();
+    drawSwordAndSatellite();
 
     // Swap the buffers
     glutSwapBuffers();
 }
 
 void update(int value) {
-    planetAngleY += 2.0f;
-    if (planetAngleY > 360)
-        planetAngleY -= 360;
+    if (!isPaused) {
+        planetAngleY += 2.0f;
+        if (planetAngleY > 360)
+            planetAngleY -= 360;
 
-    planetTime += 0.05f;
+        planetTime += 0.05f;
+
+        // Update satellite position based on Kepler's 2nd Law
+        float a = satelliteSemiMajorAxis;
+        float e = satelliteEccentricity;
+        float r = a * (1 - e * e) / (1 + e * cos(satelliteTrueAnomaly));
+        
+        // d(theta)/dt is proportional to 1/r^2
+        float angular_velocity_factor = 0.3f; // Adjust for speed
+        float d_theta = angular_velocity_factor / (r * r);
+        satelliteTrueAnomaly += d_theta;
+        if (satelliteTrueAnomaly > 2 * M_PI) {
+            satelliteTrueAnomaly -= 2 * M_PI;
+        }
+
+        moonAngle += 5.0f; // Controls the speed of the new satellite
+        if (moonAngle > 360.0f) {
+            moonAngle -= 360.0f;
+        }
+        
+        // Sword sway animation
+        swordSwayAngle = sin(planetTime * 2.0f) * 5.0f;
+    }
 
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);
@@ -155,6 +340,10 @@ void keyboard(unsigned char key, int x, int y) {
     bool viewChanged = false;
 
     switch (key) {
+    case 'p':
+    case 'P':
+        isPaused = !isPaused;
+        break;
     case 'r':
     case 'R':
         reset();
