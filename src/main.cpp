@@ -20,6 +20,7 @@ int main(int argc, char** argv) {
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
+    glutSpecialFunc(specialKeyboard);
     glutTimerFunc(16, update, 0);
 
     // Enter the GLUT event processing loop

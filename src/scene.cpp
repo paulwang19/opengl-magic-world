@@ -3,6 +3,7 @@
 #include "tga_loader.hpp"
 #include <stdlib.h> // for exit()
 #include <vector>
+#include <cmath>
 
 using namespace std;
 
@@ -16,7 +17,18 @@ vector<TexCoord> tower_texcoords_data;
 GLfloat planetAngleX, planetAngleY, planetAngleZ = 0.0f;
 float planetTime = 0.0f;
 GLfloat angleX, angleY, angleZ;
+GLfloat cameraX = 0.0f, cameraY = 0.0f, cameraZ = 10.0f;
+GLfloat lookAtX = 0.0f, lookAtY = 0.0f, lookAtZ = 0.0f;
+GLfloat viewAngleY = 0.0f;
 GLuint planetTexture, towerTexture, groundTexture;
+
+// Function to reset the scene
+void reset() {
+    angleX = angleY = angleZ = 0.0f;
+    cameraX = 0.0f; cameraY = 0.0f; cameraZ = 10.0f;
+    lookAtX = 0.0f; lookAtY = 0.0f; lookAtZ = 0.0f;
+    viewAngleY = 0.0f;
+}
 
 // Function to initialize OpenGL settings
 void init() {
@@ -34,14 +46,15 @@ void init() {
     glEnable(GL_TEXTURE_2D);
     planetTexture = loadTGATexture("assets/textures/planet.tga");
     towerTexture = loadTGATexture("assets/textures/tower.tga");
-    groundTexture = loadTGATexture("assets/textures/grass.tga");
+    groundTexture = loadTGATexture("assets/textures/chessboard.tga");
+    reset();
 }
 
 void drawPlanet() {
     glPushMatrix();
-    float yWave = cos(planetTime) * 1.0f; // 1.0f ¬OÂ\°Ê´T«×
-    glTranslatef(-5.0f, 2.5f + yWave, 0.0f); // y ¥[¤W cos ªiÂ\°Ê
-    glRotatef(planetAngleY, 0.0f, 1.0f, 0.0f); // ¦ÛÂà
+    float yWave = cos(planetTime) * 1.0f; // 1.0f ï¿½Oï¿½\ï¿½Ê´Tï¿½ï¿½
+    glTranslatef(-5.0f, 2.5f + yWave, 0.0f); // y ï¿½[ï¿½W cos ï¿½iï¿½\ï¿½ï¿½
+    glRotatef(planetAngleY, 0.0f, 1.0f, 0.0f); // ï¿½ï¿½ï¿½ï¿½
     glColor3f(1.0f, 1.0f, 1.0f);
     glBindTexture(GL_TEXTURE_2D, planetTexture);
     GLUquadric* quad = gluNewQuadric();
@@ -93,8 +106,8 @@ void display() {
     glLoadIdentity();
 
     // Set the camera
-    gluLookAt(0.0, 0.0, 10.0,  // eye position
-              0.0, 0.0, 0.0,   // look-at position
+    gluLookAt(cameraX, cameraY, cameraZ,  // eye position
+              lookAtX, lookAtY, lookAtZ,   // look-at position
               0.0, 1.0, 0.0);  // up vector
 
     // Apply rotations
@@ -138,23 +151,72 @@ void reshape(int w, int h) {
 
 // Keyboard callback function
 void keyboard(unsigned char key, int x, int y) {
+    float turnSpeed = 0.05f;
+    bool viewChanged = false;
+
     switch (key) {
-    case 'x':
-    case 'X':
-        angleX += 5.0;
+    case 'r':
+    case 'R':
+        reset();
         break;
-    case 'y':
-    case 'Y':
-        angleY += 5.0;
+    case 'q':
+    case 'Q':
+        viewAngleY -= turnSpeed;
+        viewChanged = true;
+        break;
+    case 'w':
+    case 'W':
+        viewAngleY += turnSpeed;
+        viewChanged = true;
+        break;
+    case ' ':
+        cameraY += 0.5f;
+        lookAtY += 0.5f;
         break;
     case 'z':
     case 'Z':
-        angleZ += 5.0;
+        cameraY -= 0.5f;
+        lookAtY -= 0.5f;
         break;
     case 27: // ESC key
         exit(0);
         break;
     }
+
+    if (viewChanged) {
+        lookAtX = cameraX + sin(viewAngleY);
+        lookAtZ = cameraZ - cos(viewAngleY);
+    }
     // Request a redraw
+    glutPostRedisplay();
+}
+
+void specialKeyboard(int key, int x, int y) {
+    float moveSpeed = 0.5f;
+    float dirX = sin(viewAngleY);
+    float dirZ = -cos(viewAngleY);
+
+    switch (key) {
+        case GLUT_KEY_UP:
+            cameraX += dirX * moveSpeed;
+            cameraZ += dirZ * moveSpeed;
+            break;
+        case GLUT_KEY_DOWN:
+            cameraX -= dirX * moveSpeed;
+            cameraZ -= dirZ * moveSpeed;
+            break;
+        case GLUT_KEY_LEFT:
+            cameraX += dirZ * moveSpeed;
+            cameraZ -= dirX * moveSpeed;
+            break;
+        case GLUT_KEY_RIGHT:
+            cameraX -= dirZ * moveSpeed;
+            cameraZ += dirX * moveSpeed;
+            break;
+    }
+
+    lookAtX = cameraX + dirX;
+    lookAtZ = cameraZ + dirZ;
+
     glutPostRedisplay();
 }
