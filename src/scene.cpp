@@ -2,6 +2,7 @@
 #include "obj_loader.hpp"
 #include "tga_loader.hpp"
 #include <stdlib.h> // for exit()
+#include <iostream>
 #include <vector>
 
 using namespace std;
@@ -12,6 +13,28 @@ vector<Vertex> tower_vertex_data;
 vector<Face> tower_face_data;
 vector<Normal> tower_normals_data;
 vector<TexCoord> tower_texcoords_data;
+
+TrebleClefObject trebleClef = TrebleClefObject();
+
+// TrebleClef
+TrebleClefObject::TrebleClefObject() {
+    const char* file = "assets/models/TrebleClef01.obj";
+    LoadObjFile(file, TrebleClefObject::_vertices, TrebleClefObject::_texCoords, TrebleClefObject::_normals, TrebleClefObject::_faces);
+}
+
+void TrebleClefObject::DrawTrebleClef() {
+    TrebleClefObject::_texture = loadTGATexture("assets/textures/TrebleClef.tga"); 
+    glEnable(GL_TEXTURE_2D); 
+    glColor3f(1.0f, 1.0f, 1.0f); 
+    glBindTexture(GL_TEXTURE_2D, _texture); // Bind the texture
+    glPushMatrix();
+    // Scale model to fit the scene
+    glScalef(0.001f, 0.001f, 0.001f);
+    glTranslatef(0.0f, 0.0f, 0.0f);
+    DrawObjModel(TrebleClefObject::_vertices, TrebleClefObject::_texCoords, TrebleClefObject::_normals, TrebleClefObject::_faces); 
+    glBindTexture(GL_TEXTURE_2D, 0); // Unbind the texture
+    glPopMatrix();
+}
 
 // Function to initialize OpenGL settings
 void init() {
@@ -47,8 +70,11 @@ void display() {
     glRotatef(angleY, 0.0, 1.0, 0.0);
     glRotatef(angleZ, 0.0, 0.0, 1.0);
 
+    // Draw the treble clef
+    trebleClef.DrawTrebleClef(); 
+
     // Load Tower
-    glColor3f(1.0f, 1.0f, 1.0f); // ½T«O¼Ò«¬«G¤@ÂI¡]Á×§K¥þ¶Â¡^
+    glColor3f(1.0f, 1.0f, 1.0f); // ï¿½Tï¿½Oï¿½Ò«ï¿½ï¿½Gï¿½@ï¿½Iï¿½]ï¿½×§Kï¿½ï¿½ï¿½Â¡^
     glBindTexture(GL_TEXTURE_2D, woodTexture);
     glPushMatrix();
     glTranslatef(0.0f, -1.0f, -5.0f);
