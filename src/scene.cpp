@@ -3,6 +3,7 @@
 #include "tga_loader.hpp"
 #include <stdlib.h> // for exit()
 #include <iostream>
+#include <cmath>
 #include <vector>
 
 using namespace std;
@@ -18,9 +19,16 @@ GLfloat planetAngleX, planetAngleY, planetAngleZ = 0.0f;
 TrebleClefObject trebleClef = TrebleClefObject();
 
 // TrebleClef
-TrebleClefObject::TrebleClefObject() {
+TrebleClefObject::TrebleClefObject() : angle(0.0f), verticalAngle(0.0f), radius(5.0f), Amplitude(2.0f), _x(0.0f), _y(0.0f), _z(0.0f) {
     const char* file = "assets/models/TrebleClef01.obj";
     LoadObjFile(file, TrebleClefObject::_vertices, TrebleClefObject::_texCoords, TrebleClefObject::_normals, TrebleClefObject::_faces);
+}
+
+void TrebleClefObject::Update() {
+    angle += 0.05f;
+    verticalAngle += 0.08f;
+    if ( angle > 2 * 3.1415 ) angle -= 2 * 3.1415;
+    if ( verticalAngle > 2 * 3.1415 ) verticalAngle -= 2 * 3.1415;
 }
 
 void TrebleClefObject::DrawTrebleClef() {
@@ -29,9 +37,12 @@ void TrebleClefObject::DrawTrebleClef() {
     glColor3f(1.0f, 1.0f, 1.0f); 
     glBindTexture(GL_TEXTURE_2D, _texture); // Bind the texture
     glPushMatrix();
+    _x = radius * cos(angle);
+    _z = radius * sin(angle);
+    _y = Amplitude * sin(verticalAngle);
+    glTranslatef(_x, _y, _z);
     // Scale model to fit the scene
     glScalef(0.001f, 0.001f, 0.001f);
-    glTranslatef(0.0f, 0.0f, 0.0f);
     DrawObjModel(TrebleClefObject::_vertices, TrebleClefObject::_texCoords, TrebleClefObject::_normals, TrebleClefObject::_faces); 
     glBindTexture(GL_TEXTURE_2D, 0); // Unbind the texture
     glPopMatrix();
@@ -113,6 +124,7 @@ void update(int value) {
     planetAngleY += 2.0f;
     if (planetAngleY > 360)
         planetAngleY -= 360;
+    trebleClef.Update();
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);
 }

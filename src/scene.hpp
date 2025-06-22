@@ -21,13 +21,19 @@ void update(int value);
 
 class TrebleClefObject {
 public:
+    TrebleClefObject();
+    void DrawTrebleClef();
+    void Update();
+private:
     std::vector<Vertex> _vertices;
     std::vector<TexCoord> _texCoords;
     std::vector<Normal> _normals;
     std::vector<Face> _faces;
     GLuint _texture;
-    TrebleClefObject();
-    void DrawTrebleClef();
-    void Update();
+    float angle;
+    float verticalAngle;
+    float radius;
+    float Amplitude;
+    float _x, _y, _z;
 };
 #endif // SCENE_HPP
