@@ -13,6 +13,7 @@ vector<Vertex> tower_vertex_data;
 vector<Face> tower_face_data;
 vector<Normal> tower_normals_data;
 vector<TexCoord> tower_texcoords_data;
+GLfloat planetAngleX, planetAngleY, planetAngleZ = 0.0f;
 
 TrebleClefObject trebleClef = TrebleClefObject();
 
@@ -50,7 +51,34 @@ void init() {
     // Enable color material
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_TEXTURE_2D);
-    woodTexture = loadTGATexture("assets/textures/wood.tga");
+    planetTexture = loadTGATexture("assets/textures/test.tga");
+    towerTexture = loadTGATexture("assets/textures/tower.tga");
+}
+
+void drawPlanet() {
+    glPushMatrix();
+    glRotatef(planetAngleY, 0.0, 1.0, 0.0);
+    glTranslatef(-5.0, 2.5, 0.0); // Position the sphere
+    glColor3f(1.0, 1.0, 1.0); // Use white color for texturing
+    glBindTexture(GL_TEXTURE_2D, planetTexture);
+    GLUquadric* quad = gluNewQuadric();
+    gluQuadricTexture(quad, GL_TRUE);
+    glScalef(0.5f, 0.5f, 0.5f);
+    gluSphere(quad, 1.0, 50, 50);
+    gluDeleteQuadric(quad);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glPopMatrix();
+}
+
+void drawTower() {
+    glColor3f(1.0f, 1.0f, 1.0f); // �T�O�ҫ��G�@�I�]�קK���¡^
+    glBindTexture(GL_TEXTURE_2D, towerTexture);
+    glPushMatrix();
+    glTranslatef(-5.0f, -2.0f, -5.0f);
+    glScalef(0.7f, 0.7f, 0.7f);
+    DrawObjModel(tower_vertex_data, tower_texcoords_data, tower_normals_data, tower_face_data);
+    glPopMatrix();
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 // Display callback function
@@ -73,36 +101,20 @@ void display() {
     // Draw the treble clef
     trebleClef.DrawTrebleClef(); 
 
-    // Load Tower
-    glColor3f(1.0f, 1.0f, 1.0f); // �T�O�ҫ��G�@�I�]�קK���¡^
-    glBindTexture(GL_TEXTURE_2D, woodTexture);
-    glPushMatrix();
-    glTranslatef(0.0f, -1.0f, -5.0f);
-    DrawObjModel(tower_vertex_data, tower_texcoords_data, tower_normals_data, tower_face_data);
-    glPopMatrix();
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Draw the cube
-    glPushMatrix();
-    glTranslatef(-1.5, 0.0, 0.0); // Position the cube
-    glColor3f(1.0, 0.0, 0.0); // Red color
-    glutSolidCube(2.0);
-    glPopMatrix();
-
-    // Draw the sphere
-    glPushMatrix();
-    glTranslatef(1.5, 0.0, 0.0); // Position the sphere
-    glColor3f(1.0, 1.0, 1.0); // Use white color for texturing
-    glBindTexture(GL_TEXTURE_2D, woodTexture);
-    GLUquadric* quad = gluNewQuadric();
-    gluQuadricTexture(quad, GL_TRUE);
-    gluSphere(quad, 1.0, 50, 50);
-    gluDeleteQuadric(quad);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glPopMatrix();
+    // Draw Function
+    drawPlanet();
+    drawTower();
 
     // Swap the buffers
     glutSwapBuffers();
+}
+
+void update(int value) {
+    planetAngleY += 2.0f;
+    if (planetAngleY > 360)
+        planetAngleY -= 360;
+    glutPostRedisplay();
+    glutTimerFunc(16, update, 0);
 }
 
 // Reshape callback function
