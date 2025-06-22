@@ -20,10 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\obj_loader.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\tga_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\obj_loader.hpp" />
     <ClInclude Include="src\scene.hpp" />
     <ClInclude Include="src\tga_loader.hpp" />
   </ItemGroup>
