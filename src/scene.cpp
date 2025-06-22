@@ -1,9 +1,21 @@
 #include "scene.hpp"
+#include "obj_loader.hpp"
 #include "tga_loader.hpp"
 #include <stdlib.h> // for exit()
+#include <vector>
+
+using namespace std;
+
+const char* file1 = "assets/models/Magic_tower.obj";
+
+vector<Vertex> tower_vertex_data;
+vector<Face> tower_face_data;
+vector<Normal> tower_normals_data;
+vector<TexCoord> tower_texcoords_data;
 
 // Function to initialize OpenGL settings
 void init() {
+    LoadObjFile(file1, tower_vertex_data, tower_texcoords_data, tower_normals_data, tower_face_data);
     // Set clear color to black
     glClearColor(0.0, 0.0, 0.0, 1.0);
     // Enable depth testing for 3D
@@ -34,6 +46,15 @@ void display() {
     glRotatef(angleX, 1.0, 0.0, 0.0);
     glRotatef(angleY, 0.0, 1.0, 0.0);
     glRotatef(angleZ, 0.0, 0.0, 1.0);
+
+    // Load Tower
+    glColor3f(1.0f, 1.0f, 1.0f); // 確保模型亮一點（避免全黑）
+    glBindTexture(GL_TEXTURE_2D, woodTexture);
+    glPushMatrix();
+    glTranslatef(0.0f, -1.0f, -5.0f);
+    DrawObjModel(tower_vertex_data, tower_texcoords_data, tower_normals_data, tower_face_data);
+    glPopMatrix();
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     // Draw the cube
     glPushMatrix();
