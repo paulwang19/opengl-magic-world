@@ -6,7 +6,9 @@
 GLfloat angleX = 0.0;
 GLfloat angleY = 0.0;
 GLfloat angleZ = 0.0;
-GLuint woodTexture;
+GLuint planetTexture;
+GLuint towerTexture;
+
 
 // Main function
 int main(int argc, char** argv) {
@@ -26,6 +28,7 @@ int main(int argc, char** argv) {
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
+    glutTimerFunc(16, update, 0);
 
     // Enter the GLUT event processing loop
     glutMainLoop();
