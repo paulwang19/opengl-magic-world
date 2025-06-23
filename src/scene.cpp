@@ -2,6 +2,8 @@
 #include "obj_loader.hpp"
 #include "tga_loader.hpp"
 #include <stdlib.h> // for exit()
+#include <iostream>
+#include <cmath>
 #include <vector>
 #include <cmath>
 #include <iostream>
@@ -26,6 +28,38 @@ vector<Normal> sword_normals_data;
 vector<TexCoord> sword_texcoords_data;
 
 GLfloat planetAngleX, planetAngleY, planetAngleZ = 0.0f;
+
+TrebleClefObject trebleClef = TrebleClefObject();
+
+// TrebleClef
+TrebleClefObject::TrebleClefObject() : angle(0.0f), verticalAngle(0.0f), radius(7.0f), Amplitude(2.0f), _x(0.0f), _y(0.0f), _z(0.0f) {
+    const char* file = "assets/models/TrebleClef01.obj";
+    LoadObjFile(file, TrebleClefObject::_vertices, TrebleClefObject::_texCoords, TrebleClefObject::_normals, TrebleClefObject::_faces);
+}
+
+void TrebleClefObject::Update() {
+    angle += 0.05f;
+    verticalAngle += 0.08f;
+    if ( angle > 2 * 3.1415 ) angle -= 2 * 3.1415;
+    if ( verticalAngle > 2 * 3.1415 ) verticalAngle -= 2 * 3.1415;
+}
+
+void TrebleClefObject::DrawTrebleClef() {
+    TrebleClefObject::_texture = loadTGATexture("assets/textures/TrebleClef.tga"); 
+    glEnable(GL_TEXTURE_2D); 
+    glColor3f(1.0f, 1.0f, 1.0f); 
+    glBindTexture(GL_TEXTURE_2D, _texture); // Bind the texture
+    glPushMatrix();
+    _x = radius * cos(angle);
+    _z = radius * sin(angle);
+    _y = Amplitude * sin(verticalAngle);
+    glTranslatef(_x, _y, _z);
+    // Scale model to fit the scene
+    glScalef(0.001f, 0.001f, 0.001f);
+    DrawObjModel(TrebleClefObject::_vertices, TrebleClefObject::_texCoords, TrebleClefObject::_normals, TrebleClefObject::_faces); 
+    glBindTexture(GL_TEXTURE_2D, 0); // Unbind the texture
+    glPopMatrix();
+}
 float planetTime = 0.0f;
 GLfloat angleX, angleY, angleZ;
 GLfloat cameraX = 0.0f, cameraY = 0.0f, cameraZ = 10.0f;
@@ -436,6 +470,9 @@ void display() {
     glRotatef(angleY, 0.0, 1.0, 0.0);
     glRotatef(angleZ, 0.0, 0.0, 1.0);
 
+    // Draw the treble clef
+    trebleClef.DrawTrebleClef(); 
+
     // Draw Function
     drawPlanet();
     drawTower();
@@ -502,7 +539,6 @@ void update(int value) {
     }
 
     lastTime = currentTime;
-
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);
 }
