@@ -497,7 +497,19 @@ void display() {
 }
 
 void update(int value) {
+    static int lastTime = 0;
+    int currentTime = glutGet(GLUT_ELAPSED_TIME);
+
+    if (lastTime == 0) {
+        lastTime = currentTime;
+    }
+
+    float deltaTime = (currentTime - lastTime) / 1000.0f;
+
     if (!isPaused) {
+        timeElapsed += deltaTime;
+        wingAngle = sin(timeElapsed * wingSpeed) * 30.0f;
+
         planetAngleY += 2.0f;
         if (planetAngleY > 360)
             planetAngleY -= 360;
@@ -526,7 +538,7 @@ void update(int value) {
         swordSwayAngle = sin(planetTime * 2.0f) * 5.0f;
     }
 
-    trebleClef.Update();
+    lastTime = currentTime;
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);
 }
@@ -546,22 +558,7 @@ void reshape(int w, int h) {
 }
 
 void idle() {
-    if (!isPaused) {
-        static int lastTime = 0;
-        int currentTime = glutGet(GLUT_ELAPSED_TIME);
-
-        if (lastTime == 0) {
-            lastTime = currentTime;
-        }
-
-        float deltaTime = (currentTime - lastTime) / 1000.0f;
-        lastTime = currentTime;
-
-        timeElapsed += deltaTime;
-        wingAngle = sin(timeElapsed * wingSpeed) * 30.0f;
-    }
-
-    glutPostRedisplay();
+    // Animation logic has been moved to the update() function for better performance.
 }
 
 
