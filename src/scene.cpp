@@ -536,6 +536,7 @@ void update(int value) {
         
         // Sword sway animation
         swordSwayAngle = sin(planetTime * 2.0f) * 5.0f;
+        trebleClef.Update();
     }
 
     lastTime = currentTime;
