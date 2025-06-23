@@ -4,6 +4,7 @@
 #include <stdlib.h> // for exit()
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -35,6 +36,31 @@ bool isPaused = false;
 GLfloat moonAngle = 0.0f;
 GLfloat swordSwayAngle = 0.0f;
 
+
+Model bodyModel;
+Model leftWingModel;
+Model rightWingModel;
+Model grassModel;
+Model rootModel;
+Model leafModel;
+GLuint dragonTexture, grassTexture, rootTexture, leafTexture;
+float wingAngle = 0.0f;         // 翅膀目前角度
+float wingSpeed = 2.0f;         // 擺動速度（radian/sec
+float timeElapsed = 0.0f;       // 經過時間
+
+float leftWingPivotX = 0.15f;
+float leftWingPivotY = 0.9f;
+float leftWingPivotZ = 0.0f;
+
+float rightWingPivotX = -0.15f;
+float rightWingPivotY = 0.9f;
+float rightWingPivotZ = 0.0f;
+
+float dragonPosX = 1.5f;
+float dragonPosY = -2.0f;
+float dragonPosZ = 3.0f;
+
+
 // Kepler's law parameters for satellite
 const float satelliteSemiMajorAxis = -3.0f;
 const float satelliteEccentricity = 0.5f;
@@ -63,6 +89,19 @@ void init() {
     glEnable(GL_LIGHTING);
     // Enable light source 0
     glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
+    glShadeModel(GL_SMOOTH);
+
+    GLfloat light_position[] = { 0.0f, 5.0f, 10.0f, 1.0f };
+    GLfloat light_diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    GLfloat light_ambient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+
     // Enable color material
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_TEXTURE_2D);
@@ -72,11 +111,25 @@ void init() {
     swordTexture = loadTGATexture("assets/textures/s.tga");
     marbleTexture = loadTGATexture("assets/textures/marble.tga");
     woodTexture = loadTGATexture("assets/textures/wood.tga");
+
+    // 載入模型
+    loadOBJ("assets/models/dragon_body.obj", bodyModel);
+    loadOBJ("assets/models/left_wing.obj", leftWingModel);
+    loadOBJ("assets/models/right_wing.obj", rightWingModel);
+    loadTextureWithOpenCV("assets/textures/dragon_skin.jpg", dragonTexture);
+    loadOBJ("assets/models/Grass.obj", grassModel);
+    loadTextureWithOpenCV("assets/textures/grass.jpg", grassTexture);
+    loadOBJ("assets/models/root.obj", rootModel);
+    loadTextureWithOpenCV("assets/textures/root.jpg", rootTexture);
+    loadOBJ("assets/models/leaf.obj", leafModel);
+    loadTextureWithOpenCV("assets/textures/sakura.jpg", leafTexture);
+
     reset();
 }
 
 void drawPlanet() {
     glPushMatrix();
+    glEnable(GL_TEXTURE_2D);
     float yWave = cos(planetTime) * 1.0f; // 1.0f �O�\�ʴT��
     glTranslatef(-5.0f, 2.5f + yWave, 0.0f); // y �[�W cos �i�\��
     glRotatef(planetAngleY, 0.0f, 1.0f, 0.0f); // ����
@@ -88,6 +141,7 @@ void drawPlanet() {
     gluSphere(quad, 1.0, 50, 50);
     gluDeleteQuadric(quad);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 }
 
@@ -96,6 +150,7 @@ void drawGround() {
     glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
 
     glColor3f(1.0f, 1.0f, 1.0f);
+    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, groundTexture);
     glPushMatrix();
     glBegin(GL_QUADS);
@@ -108,6 +163,7 @@ void drawGround() {
     glPopMatrix();
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    glDisable(GL_TEXTURE_2D);
     GLfloat no_mat_emission[] = { 0.0, 0.0, 0.0, 1.0 };
     glMaterialfv(GL_FRONT, GL_EMISSION, no_mat_emission);
 }
@@ -116,6 +172,8 @@ void drawStar() {
     // Make the material bright
     GLfloat mat_emission[] = { 0.7, 0.7, 0.7, 1.0 }; // Bright white emission
     glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
+
+    glEnable(GL_TEXTURE_2D);
 
     GLUquadric* quad = gluNewQuadric();
     gluQuadricTexture(quad, GL_TRUE);
@@ -178,6 +236,8 @@ void drawStar() {
     gluDeleteQuadric(quad);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    glDisable(GL_TEXTURE_2D);
+
     // Reset emission
     GLfloat no_mat_emission[] = { 0.0, 0.0, 0.0, 1.0 };
     glMaterialfv(GL_FRONT, GL_EMISSION, no_mat_emission);
@@ -187,6 +247,7 @@ void drawSwordAndSatellite() {
     // Save the current matrix
     glPushMatrix();
 
+    glEnable(GL_TEXTURE_2D);
     // Translate to the sword's base position
     glTranslatef(0.0f, 3.0f, -5.0f);
 
@@ -205,6 +266,7 @@ void drawSwordAndSatellite() {
     glBindTexture(GL_TEXTURE_2D, swordTexture);
     DrawObjModel(sword_vertex_data, sword_texcoords_data, sword_normals_data, sword_face_data);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix(); // Restore to the sword's base position
 
     // --- Draw the Satellite ---
@@ -230,6 +292,7 @@ void drawSwordAndSatellite() {
 
     // --- Draw the star's satellite ---
     glPushMatrix();
+    glEnable(GL_TEXTURE_2D);
     glRotatef(moonAngle, 0.0f, 1.0f, 0.0f); // Orbit around the star's Y-axis
     glTranslatef(3.0f, 0.0f, 0.0f); // Orbit radius
     glScalef(0.4f, 0.4f, 0.4f); // Scale down the satellite
@@ -240,6 +303,8 @@ void drawSwordAndSatellite() {
     gluSphere(quad, 1.0, 20, 20);
     gluDeleteQuadric(quad);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 
     glPopMatrix(); // Restore to the sword's base position
@@ -248,8 +313,49 @@ void drawSwordAndSatellite() {
     glPopMatrix();
 }
 
+
+void drawModel(const Model& model, GLuint textureID) {
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    //glScalef(0.05f, 0.05f, 0.05f);
+    glBegin(GL_TRIANGLES);
+    for (size_t f = 0; f < model.facess.size(); ++f) {
+        for (size_t i = 0; i < model.facess[f].size(); ++i) {
+            int vIdx = model.facess[f][i];
+            int tIdx = model.faceTexIndices[f][i];
+            int nIdx = model.faceNormalIndices[f][i];
+
+            if (nIdx >= 0 && nIdx < model.normalss.size()) {
+                Vec3s n = model.normalss[nIdx];
+                glNormal3f(n.x, n.y, n.z);
+            }
+
+            // 防止非法索引
+            if (tIdx >= 0 && tIdx < model.texcoordss.size()) {
+                Vec2s uv = model.texcoordss[tIdx];
+                glTexCoord2f(uv.u, 1.0f - uv.v);
+            }
+            else {
+                // 給預設 UV，避免失敗
+                glTexCoord2f(0.0f, 0.0f);
+            }
+
+            Vec3s v = model.verticess[vIdx];
+            glVertex3f(v.x, v.y, v.z);
+        }
+    }
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+}
+
+
+
+
 void drawTower() {
     glColor3f(1.0f, 1.0f, 1.0f); // Set color to white for texturing
+    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, towerTexture);
     glPushMatrix();
     glTranslatef(-5.0f, -2.0f, -5.0f);
@@ -257,10 +363,64 @@ void drawTower() {
     DrawObjModel(tower_vertex_data, tower_texcoords_data, tower_normals_data, tower_face_data);
     glPopMatrix();
     glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
 }
+
+void drawDragon() {
+    //glPushMatrix();
+    glPushMatrix();
+    glTranslatef(dragonPosX, dragonPosY, dragonPosZ);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(bodyModel, dragonTexture);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(leftWingPivotX + dragonPosX, leftWingPivotY + dragonPosY, leftWingPivotZ + dragonPosZ); // 移到接點
+    glRotatef(wingAngle, 0, 0, 1);
+    glTranslatef(-leftWingPivotX - dragonPosX, -leftWingPivotY - dragonPosY, -leftWingPivotZ - dragonPosZ); // 移回
+    glTranslatef(dragonPosX, dragonPosY, dragonPosZ);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(leftWingModel, dragonTexture);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(rightWingPivotX + dragonPosX, rightWingPivotY + dragonPosY, rightWingPivotZ + dragonPosZ); // 移到接點
+    glRotatef(-wingAngle, 0, 0, 1);
+    glTranslatef(-rightWingPivotX - dragonPosX, -rightWingPivotY - dragonPosY, -rightWingPivotZ - dragonPosZ); // 移回
+    glTranslatef(dragonPosX, dragonPosY, dragonPosZ);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(rightWingModel, dragonTexture);
+    glPopMatrix();
+    //glPopMatrix();
+}
+
+void drawGrass() {
+    glPushMatrix();
+    glTranslatef(0.0f, -2.0f, 0.0f);
+    glScalef(50.0f, 0.01f, 50.0f);
+    drawModel(grassModel, grassTexture);
+    glPopMatrix();
+}
+
+void drawTree(float x, float z) {
+    glPushMatrix();
+    glTranslatef(x, -2.0f, z);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(rootModel, rootTexture);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(x, -2.0f, z);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(leafModel, leafTexture);
+    glPopMatrix();
+}
+
+
 
 // Display callback function
 void display() {
+    glClearColor(0.0f, 0.6f, 0.9f, 1.0f);
     // Clear the color and depth buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Reset transformations
@@ -279,9 +439,22 @@ void display() {
     // Draw Function
     drawPlanet();
     drawTower();
-    drawGround();
+    drawGrass();
+    drawTree(-2.6f, 4.0f);
+    drawTree(-1.8f, 3.4f);
+    drawTree(-0.9f, 4.5f);
+    float countree = 0.0f;
+    for (int i = 1; i < 4; i++) {
+        for (int j = 1; j < 6; j++) {
+            drawTree(1.03f * j - countree, 0.9f*i - 2.3f);
+        }
+        countree += 0.4f;
+    }
+    //drawGround();
     drawSwordAndSatellite();
-
+    
+    drawDragon();
+    
     // Swap the buffers
     glutSwapBuffers();
 }
@@ -333,6 +506,26 @@ void reshape(int w, int h) {
     // Switch back to the modelview matrix
     glMatrixMode(GL_MODELVIEW);
 }
+
+void idle() {
+    if (!isPaused) {
+        static int lastTime = 0;
+        int currentTime = glutGet(GLUT_ELAPSED_TIME);
+
+        if (lastTime == 0) {
+            lastTime = currentTime;
+        }
+
+        float deltaTime = (currentTime - lastTime) / 1000.0f;
+        lastTime = currentTime;
+
+        timeElapsed += deltaTime;
+        wingAngle = sin(timeElapsed * wingSpeed) * 30.0f;
+    }
+
+    glutPostRedisplay();
+}
+
 
 // Keyboard callback function
 void keyboard(unsigned char key, int x, int y) {
