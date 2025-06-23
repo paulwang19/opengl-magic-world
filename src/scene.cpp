@@ -4,6 +4,7 @@
 #include <stdlib.h> // for exit()
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -34,6 +35,24 @@ GLuint planetTexture, towerTexture, groundTexture, swordTexture, marbleTexture, 
 bool isPaused = false;
 GLfloat moonAngle = 0.0f;
 GLfloat swordSwayAngle = 0.0f;
+
+
+Model bodyModel;
+Model leftWingModel;
+Model rightWingModel;
+GLuint dragonTexture;
+float wingAngle = 0.0f;         // 翅膀目前角度
+float wingSpeed = 2.0f;         // 擺動速度（radian/sec
+float timeElapsed = 0.0f;       // 經過時間
+
+float leftWingPivotX = 0.03f;
+float leftWingPivotY = 0.18f;
+float leftWingPivotZ = 0.0f;
+
+float rightWingPivotX = -0.03f;
+float rightWingPivotY = 0.18f;
+float rightWingPivotZ = 0.0f;
+
 
 // Kepler's law parameters for satellite
 const float satelliteSemiMajorAxis = -3.0f;
@@ -72,11 +91,19 @@ void init() {
     swordTexture = loadTGATexture("assets/textures/s.tga");
     marbleTexture = loadTGATexture("assets/textures/marble.tga");
     woodTexture = loadTGATexture("assets/textures/wood.tga");
+
+    // 載入模型
+    loadOBJ("assets/models/dragon_body.obj", bodyModel);
+    loadOBJ("assets/models/left_wing.obj", leftWingModel);
+    loadOBJ("assets/models/right_wing.obj", rightWingModel);
+    loadTextureWithOpenCV("assets/textures/dragon_skin.jpg", dragonTexture);
+
     reset();
 }
 
 void drawPlanet() {
     glPushMatrix();
+    glEnable(GL_TEXTURE_2D);
     float yWave = cos(planetTime) * 1.0f; // 1.0f �O�\�ʴT��
     glTranslatef(-5.0f, 2.5f + yWave, 0.0f); // y �[�W cos �i�\��
     glRotatef(planetAngleY, 0.0f, 1.0f, 0.0f); // ����
@@ -88,6 +115,7 @@ void drawPlanet() {
     gluSphere(quad, 1.0, 50, 50);
     gluDeleteQuadric(quad);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 }
 
@@ -96,6 +124,7 @@ void drawGround() {
     glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
 
     glColor3f(1.0f, 1.0f, 1.0f);
+    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, groundTexture);
     glPushMatrix();
     glBegin(GL_QUADS);
@@ -108,6 +137,7 @@ void drawGround() {
     glPopMatrix();
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    glDisable(GL_TEXTURE_2D);
     GLfloat no_mat_emission[] = { 0.0, 0.0, 0.0, 1.0 };
     glMaterialfv(GL_FRONT, GL_EMISSION, no_mat_emission);
 }
@@ -116,6 +146,8 @@ void drawStar() {
     // Make the material bright
     GLfloat mat_emission[] = { 0.7, 0.7, 0.7, 1.0 }; // Bright white emission
     glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
+
+    glEnable(GL_TEXTURE_2D);
 
     GLUquadric* quad = gluNewQuadric();
     gluQuadricTexture(quad, GL_TRUE);
@@ -178,6 +210,8 @@ void drawStar() {
     gluDeleteQuadric(quad);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    glDisable(GL_TEXTURE_2D);
+
     // Reset emission
     GLfloat no_mat_emission[] = { 0.0, 0.0, 0.0, 1.0 };
     glMaterialfv(GL_FRONT, GL_EMISSION, no_mat_emission);
@@ -187,6 +221,7 @@ void drawSwordAndSatellite() {
     // Save the current matrix
     glPushMatrix();
 
+    glEnable(GL_TEXTURE_2D);
     // Translate to the sword's base position
     glTranslatef(0.0f, 3.0f, -5.0f);
 
@@ -205,6 +240,7 @@ void drawSwordAndSatellite() {
     glBindTexture(GL_TEXTURE_2D, swordTexture);
     DrawObjModel(sword_vertex_data, sword_texcoords_data, sword_normals_data, sword_face_data);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix(); // Restore to the sword's base position
 
     // --- Draw the Satellite ---
@@ -230,6 +266,7 @@ void drawSwordAndSatellite() {
 
     // --- Draw the star's satellite ---
     glPushMatrix();
+    glEnable(GL_TEXTURE_2D);
     glRotatef(moonAngle, 0.0f, 1.0f, 0.0f); // Orbit around the star's Y-axis
     glTranslatef(3.0f, 0.0f, 0.0f); // Orbit radius
     glScalef(0.4f, 0.4f, 0.4f); // Scale down the satellite
@@ -240,6 +277,8 @@ void drawSwordAndSatellite() {
     gluSphere(quad, 1.0, 20, 20);
     gluDeleteQuadric(quad);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 
     glPopMatrix(); // Restore to the sword's base position
@@ -248,8 +287,49 @@ void drawSwordAndSatellite() {
     glPopMatrix();
 }
 
+
+void drawModel(const Model& model, GLuint textureID) {
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    //glScalef(0.05f, 0.05f, 0.05f);
+    glBegin(GL_TRIANGLES);
+    for (size_t f = 0; f < model.facess.size(); ++f) {
+        for (size_t i = 0; i < model.facess[f].size(); ++i) {
+            int vIdx = model.facess[f][i];
+            int tIdx = model.faceTexIndices[f][i];
+            int nIdx = model.faceNormalIndices[f][i];
+
+            if (nIdx >= 0 && nIdx < model.normalss.size()) {
+                Vec3s n = model.normalss[nIdx];
+                glNormal3f(n.x, n.y, n.z);
+            }
+
+            // 防止非法索引
+            if (tIdx >= 0 && tIdx < model.texcoordss.size()) {
+                Vec2s uv = model.texcoordss[tIdx];
+                glTexCoord2f(uv.u, 1.0f - uv.v);
+            }
+            else {
+                // 給預設 UV，避免失敗
+                glTexCoord2f(0.0f, 0.0f);
+            }
+
+            Vec3s v = model.verticess[vIdx];
+            glVertex3f(v.x, v.y, v.z);
+        }
+    }
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+}
+
+
+
+
 void drawTower() {
     glColor3f(1.0f, 1.0f, 1.0f); // Set color to white for texturing
+    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, towerTexture);
     glPushMatrix();
     glTranslatef(-5.0f, -2.0f, -5.0f);
@@ -257,10 +337,14 @@ void drawTower() {
     DrawObjModel(tower_vertex_data, tower_texcoords_data, tower_normals_data, tower_face_data);
     glPopMatrix();
     glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
 }
+
+
 
 // Display callback function
 void display() {
+    glClearColor(0.0f, 0.6f, 0.9f, 1.0f);
     // Clear the color and depth buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Reset transformations
@@ -281,6 +365,33 @@ void display() {
     drawTower();
     drawGround();
     drawSwordAndSatellite();
+
+
+
+    // 畫身體
+    glPushMatrix();
+    glTranslatef(0.0f, 0.0f, 5.0f);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(bodyModel, dragonTexture);
+    glPopMatrix();
+
+    // 左翅膀
+    glPushMatrix();
+    glTranslatef(leftWingPivotX, leftWingPivotY, leftWingPivotZ); // 移到接點
+    glRotatef(wingAngle, 0, 0, 1); // Z 軸擺動（或依實際方向調整）
+    glTranslatef(-leftWingPivotX, -leftWingPivotY, -leftWingPivotZ); // 移回
+    //glTranslatef(0.0f, 0.0f, 5.0f);
+    drawModel(leftWingModel, dragonTexture);
+    glPopMatrix();
+
+    // 右翅膀
+    glPushMatrix();
+    glTranslatef(rightWingPivotX, rightWingPivotY, rightWingPivotZ); // 移到接點
+    glRotatef(-wingAngle, 0, 0, 1); // Z 軸擺動（或依實際方向調整）
+    glTranslatef(-rightWingPivotX, -rightWingPivotY, -rightWingPivotZ); // 移回
+    //glTranslatef(0.0f, 0.0f, 5.0f);
+    drawModel(rightWingModel, dragonTexture);
+    glPopMatrix();
 
     // Swap the buffers
     glutSwapBuffers();
@@ -333,6 +444,24 @@ void reshape(int w, int h) {
     // Switch back to the modelview matrix
     glMatrixMode(GL_MODELVIEW);
 }
+
+void idle() {
+    static int lastTime = 0;
+    int currentTime = glutGet(GLUT_ELAPSED_TIME);
+
+    if (lastTime == 0) {
+        lastTime = currentTime;
+    }
+
+    float deltaTime = (currentTime - lastTime) / 1000.0f;
+    lastTime = currentTime;
+
+    timeElapsed += deltaTime;
+    wingAngle = sin(timeElapsed * wingSpeed) * 30.0f;
+
+    glutPostRedisplay();
+}
+
 
 // Keyboard callback function
 void keyboard(unsigned char key, int x, int y) {

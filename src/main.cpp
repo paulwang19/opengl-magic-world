@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
     // Register callback functions
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
+    glutIdleFunc(idle);
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(specialKeyboard);
     glutTimerFunc(16, update, 0);
