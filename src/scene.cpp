@@ -508,18 +508,20 @@ void reshape(int w, int h) {
 }
 
 void idle() {
-    static int lastTime = 0;
-    int currentTime = glutGet(GLUT_ELAPSED_TIME);
+    if (!isPaused) {
+        static int lastTime = 0;
+        int currentTime = glutGet(GLUT_ELAPSED_TIME);
 
-    if (lastTime == 0) {
+        if (lastTime == 0) {
+            lastTime = currentTime;
+        }
+
+        float deltaTime = (currentTime - lastTime) / 1000.0f;
         lastTime = currentTime;
+
+        timeElapsed += deltaTime;
+        wingAngle = sin(timeElapsed * wingSpeed) * 30.0f;
     }
-
-    float deltaTime = (currentTime - lastTime) / 1000.0f;
-    lastTime = currentTime;
-
-    timeElapsed += deltaTime;
-    wingAngle = sin(timeElapsed * wingSpeed) * 30.0f;
 
     glutPostRedisplay();
 }

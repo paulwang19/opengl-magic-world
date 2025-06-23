@@ -9,7 +9,7 @@
 
 // Load
 void LoadObjFile(const char* filename,
-std::vector<Vertex>& vertices,
+    std::vector<Vertex>& vertices,
     std::vector<TexCoord>& texCoords,
     std::vector<Normal>& normals,
     std::vector<Face>& faces) {
@@ -43,25 +43,30 @@ std::vector<Vertex>& vertices,
             normals.push_back(n);
         }
         else if (type == "f") {
-            Face face;
-            for (int i = 0; i < 3; ++i) {
-                std::string token;
-                iss >> token;
+            std::vector<FaceIndex> indices;
+            std::string token;
+            while (iss >> token) {
                 std::replace(token.begin(), token.end(), '/', ' ');
                 std::istringstream tokenStream(token);
-                tokenStream >> face.indices[i].vIdx >> face.indices[i].tIdx >> face.indices[i].nIdx;
-
-                // OBJ index starts at 1
-                face.indices[i].vIdx--;
-                face.indices[i].tIdx--;
-                face.indices[i].nIdx--;
+                FaceIndex idx;
+                tokenStream >> idx.vIdx >> idx.tIdx >> idx.nIdx;
+                idx.vIdx--; idx.tIdx--; idx.nIdx--;  // OBJ indices start at 1
+                indices.push_back(idx);
             }
-            faces.push_back(face);
+
+            // triangle fan: (0,1,2), (0,2,3), ...
+            for (size_t i = 1; i + 1 < indices.size(); ++i) {
+                Face tri;
+                tri.indices[0] = indices[0];
+                tri.indices[1] = indices[i];
+                tri.indices[2] = indices[i + 1];
+                faces.push_back(tri);
+            }
         }
     }
 
     file.close();
- }
+}
 
 void DrawObjModel(const std::vector<Vertex>& vertices,
     const std::vector<TexCoord>& texCoords,
