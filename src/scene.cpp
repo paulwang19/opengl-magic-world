@@ -40,18 +40,25 @@ GLfloat swordSwayAngle = 0.0f;
 Model bodyModel;
 Model leftWingModel;
 Model rightWingModel;
-GLuint dragonTexture;
+Model grassModel;
+Model rootModel;
+Model leafModel;
+GLuint dragonTexture, grassTexture, rootTexture, leafTexture;
 float wingAngle = 0.0f;         // 翅膀目前角度
 float wingSpeed = 2.0f;         // 擺動速度（radian/sec
 float timeElapsed = 0.0f;       // 經過時間
 
-float leftWingPivotX = 0.03f;
-float leftWingPivotY = 0.18f;
+float leftWingPivotX = 0.15f;
+float leftWingPivotY = 0.9f;
 float leftWingPivotZ = 0.0f;
 
-float rightWingPivotX = -0.03f;
-float rightWingPivotY = 0.18f;
+float rightWingPivotX = -0.15f;
+float rightWingPivotY = 0.9f;
 float rightWingPivotZ = 0.0f;
+
+float dragonPosX = 1.5f;
+float dragonPosY = -2.0f;
+float dragonPosZ = 3.0f;
 
 
 // Kepler's law parameters for satellite
@@ -82,6 +89,19 @@ void init() {
     glEnable(GL_LIGHTING);
     // Enable light source 0
     glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
+    glShadeModel(GL_SMOOTH);
+
+    GLfloat light_position[] = { 0.0f, 5.0f, 10.0f, 1.0f };
+    GLfloat light_diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    GLfloat light_ambient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+
     // Enable color material
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_TEXTURE_2D);
@@ -97,6 +117,12 @@ void init() {
     loadOBJ("assets/models/left_wing.obj", leftWingModel);
     loadOBJ("assets/models/right_wing.obj", rightWingModel);
     loadTextureWithOpenCV("assets/textures/dragon_skin.jpg", dragonTexture);
+    loadOBJ("assets/models/Grass.obj", grassModel);
+    loadTextureWithOpenCV("assets/textures/grass.jpg", grassTexture);
+    loadOBJ("assets/models/root.obj", rootModel);
+    loadTextureWithOpenCV("assets/textures/root.jpg", rootTexture);
+    loadOBJ("assets/models/leaf.obj", leafModel);
+    loadTextureWithOpenCV("assets/textures/sakura.jpg", leafTexture);
 
     reset();
 }
@@ -340,6 +366,56 @@ void drawTower() {
     glDisable(GL_TEXTURE_2D);
 }
 
+void drawDragon() {
+    //glPushMatrix();
+    glPushMatrix();
+    glTranslatef(dragonPosX, dragonPosY, dragonPosZ);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(bodyModel, dragonTexture);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(leftWingPivotX + dragonPosX, leftWingPivotY + dragonPosY, leftWingPivotZ + dragonPosZ); // 移到接點
+    glRotatef(wingAngle, 0, 0, 1);
+    glTranslatef(-leftWingPivotX - dragonPosX, -leftWingPivotY - dragonPosY, -leftWingPivotZ - dragonPosZ); // 移回
+    glTranslatef(dragonPosX, dragonPosY, dragonPosZ);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(leftWingModel, dragonTexture);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(rightWingPivotX + dragonPosX, rightWingPivotY + dragonPosY, rightWingPivotZ + dragonPosZ); // 移到接點
+    glRotatef(-wingAngle, 0, 0, 1);
+    glTranslatef(-rightWingPivotX - dragonPosX, -rightWingPivotY - dragonPosY, -rightWingPivotZ - dragonPosZ); // 移回
+    glTranslatef(dragonPosX, dragonPosY, dragonPosZ);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(rightWingModel, dragonTexture);
+    glPopMatrix();
+    //glPopMatrix();
+}
+
+void drawGrass() {
+    glPushMatrix();
+    glTranslatef(0.0f, -2.0f, 0.0f);
+    glScalef(50.0f, 0.01f, 50.0f);
+    drawModel(grassModel, grassTexture);
+    glPopMatrix();
+}
+
+void drawTree(float x, float z) {
+    glPushMatrix();
+    glTranslatef(x, -2.0f, z);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(rootModel, rootTexture);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(x, -2.0f, z);
+    glScalef(0.05f, 0.05f, 0.05f);
+    drawModel(leafModel, leafTexture);
+    glPopMatrix();
+}
+
 
 
 // Display callback function
@@ -363,36 +439,22 @@ void display() {
     // Draw Function
     drawPlanet();
     drawTower();
-    drawGround();
+    drawGrass();
+    drawTree(-2.6f, 4.0f);
+    drawTree(-1.8f, 3.4f);
+    drawTree(-0.9f, 4.5f);
+    float countree = 0.0f;
+    for (int i = 1; i < 4; i++) {
+        for (int j = 1; j < 6; j++) {
+            drawTree(1.03f * j - countree, 0.9f*i - 2.3f);
+        }
+        countree += 0.4f;
+    }
+    //drawGround();
     drawSwordAndSatellite();
-
-
-
-    // 畫身體
-    glPushMatrix();
-    glTranslatef(0.0f, 0.0f, 5.0f);
-    glScalef(0.05f, 0.05f, 0.05f);
-    drawModel(bodyModel, dragonTexture);
-    glPopMatrix();
-
-    // 左翅膀
-    glPushMatrix();
-    glTranslatef(leftWingPivotX, leftWingPivotY, leftWingPivotZ); // 移到接點
-    glRotatef(wingAngle, 0, 0, 1); // Z 軸擺動（或依實際方向調整）
-    glTranslatef(-leftWingPivotX, -leftWingPivotY, -leftWingPivotZ); // 移回
-    //glTranslatef(0.0f, 0.0f, 5.0f);
-    drawModel(leftWingModel, dragonTexture);
-    glPopMatrix();
-
-    // 右翅膀
-    glPushMatrix();
-    glTranslatef(rightWingPivotX, rightWingPivotY, rightWingPivotZ); // 移到接點
-    glRotatef(-wingAngle, 0, 0, 1); // Z 軸擺動（或依實際方向調整）
-    glTranslatef(-rightWingPivotX, -rightWingPivotY, -rightWingPivotZ); // 移回
-    //glTranslatef(0.0f, 0.0f, 5.0f);
-    drawModel(rightWingModel, dragonTexture);
-    glPopMatrix();
-
+    
+    drawDragon();
+    
     // Swap the buffers
     glutSwapBuffers();
 }

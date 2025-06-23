@@ -102,6 +102,7 @@ bool loadTextureWithOpenCV(const std::string& path, GLuint& textureIDs) {
     glGenTextures(1, &textureIDs);
     glBindTexture(GL_TEXTURE_2D, textureIDs);
 
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.cols, image.rows, 0,
         GL_RGB, GL_UNSIGNED_BYTE, image.data);
 
