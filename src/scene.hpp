@@ -26,7 +26,7 @@ void reset();
 class TrebleClefObject {
 public:
     TrebleClefObject();
-    void DrawTrebleClef();
+    void DrawTrebleClef(bool forShadow = false);
     void Update();
 private:
     std::vector<Vertex> _vertices;
