@@ -5,23 +5,23 @@
 #include <GL/freeglut.h>
 
 struct Vertex {
-    float x, y, z;
+	float x, y, z;
 };
 
 struct TexCoord {
-    float u, v;
+	float u, v;
 };
 
 struct Normal {
-    float nx, ny, nz;
+	float nx, ny, nz;
 };
 
 struct FaceIndex {
-    int vIdx, tIdx, nIdx;
+	int vIdx, tIdx, nIdx;
 };
 
 struct Face {
-    FaceIndex indices[3];
+	FaceIndex indices[3];
 };
 
 
@@ -40,7 +40,6 @@ struct Model {
 	std::vector<std::vector<int>> facess;             // v index
 	std::vector<std::vector<int>> faceTexIndices;     // vt index
 	std::vector<std::vector<int>> faceNormalIndices;
-
 };
 
 
