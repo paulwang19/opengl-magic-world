@@ -40,7 +40,6 @@ struct Model {
 	std::vector<std::vector<int>> facess;             // v index
 	std::vector<std::vector<int>> faceTexIndices;     // vt index
 	std::vector<std::vector<int>> faceNormalIndices;
-
 };
 
 
