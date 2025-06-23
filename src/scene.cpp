@@ -69,6 +69,7 @@ GLuint planetTexture, towerTexture, groundTexture, swordTexture, marbleTexture, 
 bool isPaused = false;
 GLfloat moonAngle = 0.0f;
 GLfloat swordSwayAngle = 0.0f;
+GLfloat lightPos[] = {10.0f, 20.0f, 10.0f, 1.0f}; // Light position for shadows
 
 
 Model bodyModel;
@@ -135,6 +136,15 @@ void init() {
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
     glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+
+    // Add a new light for shadows
+    glEnable(GL_LIGHT1);
+    GLfloat light1_position[] = { lightPos[0], lightPos[1], lightPos[2], lightPos[3] };
+    GLfloat light1_diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    GLfloat light1_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, light1_specular);
 
     // Enable color material
     glEnable(GL_COLOR_MATERIAL);
@@ -450,6 +460,27 @@ void drawTree(float x, float z) {
     glPopMatrix();
 }
 
+// Function to build the shadow projection matrix
+void buildShadowMatrix(GLfloat matrix[16], const GLfloat light_pos[4], const GLfloat plane[4]) {
+    GLfloat dot = plane[0] * light_pos[0] + plane[1] * light_pos[1] + plane[2] * light_pos[2] + plane[3] * light_pos[3];
+    matrix[0] = dot - light_pos[0] * plane[0];
+    matrix[1] = 0.0f - light_pos[1] * plane[0];
+    matrix[2] = 0.0f - light_pos[2] * plane[0];
+    matrix[3] = 0.0f - light_pos[3] * plane[0];
+    matrix[4] = 0.0f - light_pos[0] * plane[1];
+    matrix[5] = dot - light_pos[1] * plane[1];
+    matrix[6] = 0.0f - light_pos[2] * plane[1];
+    matrix[7] = 0.0f - light_pos[3] * plane[1];
+    matrix[8] = 0.0f - light_pos[0] * plane[2];
+    matrix[9] = 0.0f - light_pos[1] * plane[2];
+    matrix[10] = dot - light_pos[2] * plane[2];
+    matrix[11] = 0.0f - light_pos[3] * plane[2];
+    matrix[12] = 0.0f - light_pos[0] * plane[3];
+    matrix[13] = 0.0f - light_pos[1] * plane[3];
+    matrix[14] = 0.0f - light_pos[2] * plane[3];
+    matrix[15] = dot - light_pos[3] * plane[3];
+}
+
 
 
 // Display callback function
@@ -470,13 +501,31 @@ void display() {
     glRotatef(angleY, 0.0, 1.0, 0.0);
     glRotatef(angleZ, 0.0, 0.0, 1.0);
 
-    // Draw the treble clef
-    trebleClef.DrawTrebleClef(); 
-
-    // Draw Function
-    drawPlanet();
-    drawTower();
+    // 1. Draw the grass (the surface to receive shadows)
     drawGrass();
+
+    // 2. Draw the shadows
+    glPushMatrix();
+    GLfloat shadow_matrix[16];
+    GLfloat plane[] = {0.0f, 1.0f, 0.0f, 2.0f}; // y = -2.0f plane
+    buildShadowMatrix(shadow_matrix, lightPos, plane);
+
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.5f); // Darker shadow color to make it more visible
+
+    // Disable depth test to prevent z-fighting with the grass
+    glDisable(GL_DEPTH_TEST);
+
+    glMultMatrixf(shadow_matrix);
+
+    // Draw all objects that should cast a shadow
+    drawTower();
+    drawPlanet();
+    drawSwordAndSatellite();
+    drawDragon();
     drawTree(-2.6f, 4.0f);
     drawTree(-1.8f, 3.4f);
     drawTree(-0.9f, 4.5f);
@@ -487,11 +536,34 @@ void display() {
         }
         countree += 0.4f;
     }
-    //drawGround();
+    trebleClef.DrawTrebleClef();
+
+    glPopMatrix();
+
+    // Restore rendering state
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+
+
+    // 3. Draw the actual objects
+    trebleClef.DrawTrebleClef();
+    drawPlanet();
+    drawTower();
+    drawTree(-2.6f, 4.0f);
+    drawTree(-1.8f, 3.4f);
+    drawTree(-0.9f, 4.5f);
+    countree = 0.0f;
+    for (int i = 1; i < 4; i++) {
+        for (int j = 1; j < 6; j++) {
+            drawTree(1.03f * j - countree, 0.9f*i - 2.3f);
+        }
+        countree += 0.4f;
+    }
     drawSwordAndSatellite();
-    
     drawDragon();
-    
+
     // Swap the buffers
     glutSwapBuffers();
 }
@@ -557,11 +629,6 @@ void reshape(int w, int h) {
     // Switch back to the modelview matrix
     glMatrixMode(GL_MODELVIEW);
 }
-
-void idle() {
-    // Animation logic has been moved to the update() function for better performance.
-}
-
 
 // Keyboard callback function
 void keyboard(unsigned char key, int x, int y) {
