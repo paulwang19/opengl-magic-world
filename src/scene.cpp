@@ -32,7 +32,7 @@ GLfloat planetAngleX, planetAngleY, planetAngleZ = 0.0f;
 TrebleClefObject trebleClef = TrebleClefObject();
 
 // TrebleClef
-TrebleClefObject::TrebleClefObject() : angle(0.0f), verticalAngle(0.0f), radius(7.0f), Amplitude(2.0f), _x(0.0f), _y(0.0f), _z(0.0f) {
+TrebleClefObject::TrebleClefObject() : angle(0.0f), verticalAngle(0.0f), radius(7.0f), Amplitude(1.0f), _x(0.0f), _y(0.0f), _z(0.0f) {
     const char* file = "assets/models/TrebleClef01.obj";
     LoadObjFile(file, TrebleClefObject::_vertices, TrebleClefObject::_texCoords, TrebleClefObject::_normals, TrebleClefObject::_faces);
 }
