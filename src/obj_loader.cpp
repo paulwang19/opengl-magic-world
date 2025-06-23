@@ -5,6 +5,7 @@
 #include <string>
 #include <algorithm>
 #include <GL/freeglut.h>
+#include <iostream>
 
 // Load
 void LoadObjFile(const char* filename,
@@ -78,6 +79,62 @@ void DrawObjModel(const std::vector<Vertex>& vertices,
         }
     }
     glEnd();
+}
+
+void loadOBJ(const char* filename, Model& model) {
+    std::ifstream file(filename);
+    std::string line;
+
+    if (!file.is_open()) {
+        std::cerr << "無法開啟檔案：" << filename << std::endl;
+        return;
+    }
+
+    while (std::getline(file, line)) {
+        line.erase(0, line.find_first_not_of(" \t"));
+        std::istringstream iss(line);
+        std::string type;
+        iss >> type;
+
+        if (type == "v") {
+            Vec3s v;
+            iss >> v.x >> v.y >> v.z;
+            model.verticess.push_back(v);
+        }
+        else if (type == "vn") {
+            Vec3s n;
+            iss >> n.x >> n.y >> n.z;
+            model.normalss.push_back(n);
+        }
+        else if (type == "f") {
+            std::vector<int> vIndices;
+            std::vector<int> tIndices;
+            std::vector<int> nIndices;
+            std::string token;
+
+            while (iss >> token) {
+                int vIdx = 0, tIdx = 0, nIdx = 0;
+                sscanf_s(token.c_str(), "%d/%d/%d", &vIdx, &tIdx, &nIdx);
+                vIndices.push_back(vIdx - 1);
+                tIndices.push_back(tIdx - 1);
+                nIndices.push_back(nIdx - 1);
+            }
+
+            model.facess.push_back(vIndices);
+            model.faceTexIndices.push_back(tIndices);
+            model.faceNormalIndices.push_back(nIndices);
+        }
+        else if (type == "vt") {
+            Vec2s t;
+            iss >> t.u >> t.v;
+            model.texcoordss.push_back(t);
+        }
+
+    }
+
+    std::cout << "讀取完成：" << filename << "："
+        << model.verticess.size() << " 個頂點, "
+        << model.facess.size() << " 個面" << std::endl;
 }
 
 

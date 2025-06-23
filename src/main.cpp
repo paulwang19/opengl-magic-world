@@ -2,14 +2,6 @@
 #include <GL/freeglut.h>
 #include "scene.hpp"
 
-// Rotation angles
-GLfloat angleX = 0.0;
-GLfloat angleY = 0.0;
-GLfloat angleZ = 0.0;
-GLuint planetTexture;
-GLuint towerTexture;
-
-
 // Main function
 int main(int argc, char** argv) {
     // Initialize GLUT
@@ -19,7 +11,7 @@ int main(int argc, char** argv) {
     // Set the window size
     glutInitWindowSize(800, 600);
     // Create the window
-    glutCreateWindow("Rotating Sphere and Cube");
+    glutCreateWindow("Magic World");
 
     // Initialize OpenGL settings
     init();
@@ -28,7 +20,9 @@ int main(int argc, char** argv) {
     // Register callback functions
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
+    glutIdleFunc(idle);
     glutKeyboardFunc(keyboard);
+    glutSpecialFunc(specialKeyboard);
     glutTimerFunc(16, update, 0);
 
     // Enter the GLUT event processing loop

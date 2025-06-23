@@ -1,6 +1,4 @@
-    {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
+{
     "version": "2.0.0",
     "tasks": [
         {
@@ -12,9 +10,7 @@
                 "/p:Configuration=Debug",
                 "/p:Platform=x64",
                 "/t:Build",
-                // Ask msbuild to generate full paths for file names.
                 "/property:GenerateFullPaths=true",
-                // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary"
             ],
             "group": {
@@ -22,10 +18,13 @@
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "silent"  // Reveal the output only if unrecognized errors occur.
+                "reveal": "always",
+                "revealProblems": "onProblem",
+                "clear": true
             },
-            // Use the standard MS compiler pattern to detect errors, warnings and infos
-            "problemMatcher": ["$msCompile"],
+            "problemMatcher": [
+                "$msCompile"
+            ],
             "detail": "Build Midterm-Project for x64 Debug configuration"
         },
         {
@@ -37,17 +36,18 @@
                 "/p:Configuration=Release",
                 "/p:Platform=x64",
                 "/t:Build",
-                // Ask msbuild to generate full paths for file names.
                 "/property:GenerateFullPaths=true",
-                // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary"
             ],
             "group": "build",
             "presentation": {
-                "reveal": "silent"  // Reveal the output only if unrecognized errors occur.
+                "reveal": "always",
+                "revealProblems": "onProblem",
+                "clear": true
             },
-            // Use the standard MS compiler pattern to detect errors, warnings and infos
-            "problemMatcher": ["$msCompile"],
+            "problemMatcher": [
+                "$msCompile"
+            ],
             "detail": "Build Midterm-Project for x64 Release configuration"
         },
         {
@@ -59,17 +59,18 @@
                 "/p:Configuration=Debug",
                 "/p:Platform=Win32",
                 "/t:Build",
-                // Ask msbuild to generate full paths for file names.
                 "/property:GenerateFullPaths=true",
-                // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary"
             ],
             "group": "build",
             "presentation": {
-                "reveal": "silent"  // Reveal the output only if unrecognized errors occur.
+                "reveal": "always",
+                "revealProblems": "onProblem",
+                "clear": true
             },
-            // Use the standard MS compiler pattern to detect errors, warnings and infos
-            "problemMatcher": ["$msCompile"],
+            "problemMatcher": [
+                "$msCompile"
+            ],
             "detail": "Build Midterm-Project for x86 Debug configuration"
         },
         {
@@ -81,17 +82,18 @@
                 "/p:Configuration=Release",
                 "/p:Platform=Win32",
                 "/t:Build",
-                // Ask msbuild to generate full paths for file names.
                 "/property:GenerateFullPaths=true",
-                // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary"
             ],
             "group": "build",
             "presentation": {
-                "reveal": "silent"  // Reveal the output only if unrecognized errors occur.
+                "reveal": "always",
+                "revealProblems": "onProblem",
+                "clear": true
             },
-            // Use the standard MS compiler pattern to detect errors, warnings and infos
-            "problemMatcher": ["$msCompile"],
+            "problemMatcher": [
+                "$msCompile"
+            ],
             "detail": "Build Midterm-Project for x86 Release configuration"
         }
     ]
